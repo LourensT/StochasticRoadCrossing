@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import itertools
 from datetime import datetime
 import csv
+import pickle
 
 class SimulationResults:
     """used to store relevant datapoints during a simulation """
@@ -51,7 +52,15 @@ class SimulationResults:
         plt.scatter(self.timestamps, self.queuelengths)
         plt.show()
 
-    def saveToFile(self):
-        ##
+    def saveQueuelengthsToFile(self, fp=False):
+        #pickles deque
+        if not fp:
+            fp = self.fp
+
+        pickle.dump(self.queuelengths)
         print('implement, use self.fp')
+
+    def getProbabilityMatrix(self):
+        #returns dict of dicts
+        n = len(self.queuelenghts)
 

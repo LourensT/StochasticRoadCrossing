@@ -47,10 +47,11 @@ class Simulation:
                 print(fes.getTypesList(), fes.events)
             
             e = fes.next()
-            simres.registerQueue(t, len(queue))
-
             
             if e.type == Event.GAP:
+                #register the transitionprobability
+                simres.registerQueue(t, len(queue))
+                
                 #depart the right amount of cars from the queue
                 duration = e.time - t
                 departures = int(duration // self.h)
@@ -59,7 +60,6 @@ class Simulation:
                     #a car leaves the queue, we save their waitingtime
                     if len(queue) != 0:
                         c = queue.popleft()                    
-                        simres.registerWaitingTime(t - c.arrTime) 
 
                 # TODO WHERE TO SET TIME 
                 t = e.time
@@ -80,20 +80,11 @@ class Simulation:
         return simres
 
 if __name__ == "__main__":
-    nrRuns = 1000
-    waitingtimes = np.zeros(nrRuns)
-    queuelengths = np.zeros(nrRuns)
+    timebound = 10000000 #since steady-state system we can run for extended time instead of monte-carlo
 
-    for i in range(nrRuns):
-        sim = Simulation(0.25, 0.25, 1)
-        sr = sim.simulate(300)
+    sim = Simulation(0.25, 0.25, 1)
+    sr = sim.simulate(timebound)
+    print(sr.getProbabilityMatrix())
 
-        waitingtimes[i] = sr.getMeanWaitingTime()
-        queuelengths[i] = sr.getMeanQueuelength()
 
-    print('waitingtimes')
-    print(np.mean(waitingtimes), np.std(waitingtimes))
-    print('queuelengths')
-    print(np.mean(queuelengths), np.std(queuelengths))
-    #sr.plotQueuelength()
 

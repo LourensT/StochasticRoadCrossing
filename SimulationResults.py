@@ -1,16 +1,17 @@
 import numpy as np
-from collections import deque
+from collections import deque, defaultdict
 import matplotlib.pyplot as plt
 import itertools
 from datetime import datetime
 import csv
+import pickle
 
 class SimulationResults:
     """used to store relevant datapoints during a simulation """
     def __init__(self, s, m, h, T):
         
         dt = datetime.now().strftime("%H-%M-%S")
-        self.fp = "{}_s_{}_m_{}h_{}timebound_{}.csv".format(dt, s, m, h, T)
+        self.fp = "{}_s_{}_m_{}h_{}timebound_{}.pickle".format(dt, s, m, h, T)
 
         #car metrics
         self.waitingtimes = deque()
@@ -51,7 +52,51 @@ class SimulationResults:
         plt.scatter(self.timestamps, self.queuelengths)
         plt.show()
 
-    def saveToFile(self):
-        ##
-        print('implement, use self.fp')
+    def pickleQueueLengths(self, fp=False):
+        """pickles deque"""
+        if not fp:
+            fp = self.fp
+
+        pickle.dump(self.queuelengths, open(fp, 'wb'))
+        print('dumped sucessfully')
+
+    def getProbabilityMatrix(self, fp=False):
+        """calculates and return probability matrix"""
+        #find  deque of queuelengths
+        if not fp:
+            ql = self.queuelengths
+        else:
+            #do smth
+            pass
+        
+        n = len(ql) - 1
+
+        #get frequency matrix
+        matr = defaultdict(dict)
+        prev_state = ql.popleft()
+        while ql:
+            state = ql.popleft()
+            if state in matr[prev_state]:
+                matr[prev_state][state] += 1   
+            else:
+                matr[prev_state][state] = 1
+            prev_state = state   
+
+        #normalize
+        stoch_matr = np.zeros((10, 10))
+        for k, v in matr.items():
+            if k < 10:
+                freq = sum(v.values())
+                for i, j  in v.items():
+                    if i < 10:
+                        stoch_matr[k, i] = j / freq
+
+        return stoch_matr
+
+
+        
+
+        
+
+
 

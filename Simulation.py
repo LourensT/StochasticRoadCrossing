@@ -26,7 +26,7 @@ class Simulation:
         self.m = m
         self.h = h
 
-    def simulate(self, T, verbose=False):
+    def simulate(self, T, verbose=False, immediate_departure=False):
         #start simulation untill time reaches T
 
         fes = FES()
@@ -39,18 +39,22 @@ class Simulation:
         c0 = Car(self.sideArrDist.rvs())
         fes.add(Event(c0.arrTime, Event.ARRIVAL, car=c0))
 
-        #schedule first departure
+        #schedule first gap
         fes.add( Event(self.mainArrDist.rvs(), Event.GAP))
+
+        simres.registerQueue(t, len(queue))
 
         while t < T:
             if verbose:
                 print(fes.getTypesList(), fes.events)
             
+            #next event
             e = fes.next()
             
             if e.type == Event.GAP:
-                #register the transitionprobability
-                simres.registerQueue(t, len(queue))
+                #register the transitionprobability if there is no immediate_departure
+                if not immediate_departure:
+                    simres.registerQueue(t, len(queue))
                 
                 #depart the right amount of cars from the queue
                 duration = e.time - t
@@ -59,7 +63,11 @@ class Simulation:
                 for _ in range(departures):
                     #a car leaves the queue, we save their waitingtime
                     if len(queue) != 0:
-                        c = queue.popleft()                    
+                        c = queue.popleft()       
+
+                #register the transitionprobability if there is immediate_departure
+                if immediate_departure:
+                    simres.registerQueue(t, len(queue))             
 
                 # TODO WHERE TO SET TIME 
                 t = e.time
@@ -76,15 +84,14 @@ class Simulation:
                 c1 = Car(t + self.sideArrDist.rvs())
                 fes.add(Event(c1.arrTime,Event.ARRIVAL, car=c1))
 
-
+        print(len(queue))
         return simres
 
 if __name__ == "__main__":
-    timebound = 10000000 #since steady-state system we can run for extended time instead of monte-carlo
+    timebound = 10000 #since steady-state system we can run for extended time instead of monte-carlo
 
     sim = Simulation(0.25, 0.25, 1)
-    sr = sim.simulate(timebound)
-    print(sr.getProbabilityMatrix())
-
-
-
+    sr = sim.simulate(timebound, immediate_departure=True)
+    m = sr.getProbabilityMatrix()
+    #print(m)
+    #print([sum(m[i]) for i in range(10)])

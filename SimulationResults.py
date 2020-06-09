@@ -83,15 +83,17 @@ class SimulationResults:
             prev_state = state   
 
         #normalize
+        samplesizes = []
         stoch_matr = np.zeros((10, 10))
         for k, v in matr.items():
             if k < 10:
                 freq = sum(v.values())
+                samplesizes.append(freq)
                 for i, j  in v.items():
                     if i < 10:
                         stoch_matr[k, i] = j / freq
-
-        return stoch_matr
+        print(samplesizes)
+        return np.array(stoch_matr)
 
 
         

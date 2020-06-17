@@ -31,6 +31,9 @@ class SimulationResults:
         self.timestamps.append(t)
         self.queuelengths.append(ql)
 
+    def getFinalQueueLength(self):
+        return self.queuelengths.pop()
+
     def getMeanQueuelength(self):
         """returns mean queuelength"""
         T = self.timestamps[-1]
@@ -63,12 +66,7 @@ class SimulationResults:
     def getProbabilityMatrix(self, fp=False):
         """calculates and return probability matrix"""
         #find  deque of queuelengths
-        if not fp:
-            ql = self.queuelengths
-        else:
-            #do smth
-            pass
-        
+        ql = self.queuelengths
         n = len(ql) - 1
 
         #get frequency matrix
@@ -91,9 +89,34 @@ class SimulationResults:
                 samplesizes.append(freq)
                 for i, j  in v.items():
                     if i < 10:
-                        stoch_matr[k, i] = j / freq
+                        stoch_matr[k, i] = round(j / freq, 5)
+
+        ci_matrix = []
+        for i in range(len(stoch_matr)):
+            ci_row = []
+            n = samplesizes[i]
+            for j in stoch_matr[i]:
+                halfwidth = 1.96 * (((j*(1-j))/n)**(1/2))
+                ci_row.append([j-halfwidth, j+halfwidth])
+            ci_matrix.append(ci_row)
+
+        if fp: 
+            with open(fp, 'w', encoding='utf-8') as f:
+                f.write('samplesizes')
+                f.write('\n')
+                f.write(str(samplesizes))
+                f.write('\n')
+                f.write('estimates')
+                f.write('\n')
+                f.write(str(np.array(stoch_matr)))
+                f.write('\n')
+                f.write('confidence intervals')
+                f.write('\n')
+                f.write(str(np.array(ci_matrix)))
+
         print(samplesizes)
         return np.array(stoch_matr)
+
 
 
         

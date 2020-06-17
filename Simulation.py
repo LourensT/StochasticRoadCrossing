@@ -34,6 +34,7 @@ class Simulation:
         
         queue = deque()
         t = 0
+        prev_gap_time = 0
 
         #schedule first arrival
         c0 = Car(self.sideArrDist.rvs())
@@ -52,12 +53,14 @@ class Simulation:
             e = fes.next()
             
             if e.type == Event.GAP:
+                t = e.time
                 #register the transitionprobability if there is no immediate_departure
                 if not immediate_departure:
                     simres.registerQueue(t, len(queue))
                 
                 #depart the right amount of cars from the queue
-                duration = e.time - t
+                duration = e.time - prev_gap_time
+                prev_gap_time = e.time
                 departures = int(duration // self.h)
                 
                 for _ in range(departures):
@@ -68,9 +71,6 @@ class Simulation:
                 #register the transitionprobability if there is immediate_departure
                 if immediate_departure:
                     simres.registerQueue(t, len(queue))             
-
-                # TODO WHERE TO SET TIME 
-                t = e.time
 
                 # schedule next gap
                 fes.add( Event(t+self.mainArrDist.rvs(), Event.GAP) )
@@ -84,14 +84,15 @@ class Simulation:
                 c1 = Car(t + self.sideArrDist.rvs())
                 fes.add(Event(c1.arrTime,Event.ARRIVAL, car=c1))
 
-        print(len(queue))
+        simres.registerQueue(t, len(queue))
         return simres
 
 if __name__ == "__main__":
-    timebound = 10000 #since steady-state system we can run for extended time instead of monte-carlo
+    timebound = 10000000 #since steady-state system we can run for extended time instead of monte-carlo
 
-    sim = Simulation(0.25, 0.25, 1)
-    sr = sim.simulate(timebound, immediate_departure=True)
-    m = sr.getProbabilityMatrix()
-    #print(m)
-    #print([sum(m[i]) for i in range(10)])
+    sim = Simulation(0.515, 1.03, 1) #s, m, h
+    sr = sim.simulate(timebound, immediate_departure=False)
+    m = sr.getProbabilityMatrix(fp="load_9_case2.txt")
+    np.set_printoptions(suppress=True)
+    print(m)
+    print([sum(m[i]) for i in range(10)])
